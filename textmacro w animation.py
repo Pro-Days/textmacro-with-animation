@@ -6,6 +6,29 @@ import threading
 import keyboard
 import os
 import json
+import requests
+import webbrowser
+
+
+def version_check():
+    try:
+        response = requests.get(
+            "https://api.github.com/repos/pro-days/textmacro-with-animation/releases/latest"
+        )
+        checked_version = response.json()["name"]
+        if response.status_code == 200:
+            if version == checked_version:
+                update_label.config(text="최신버전 O", fg="green")
+            else:
+                update_url = response.json()["html_url"]
+                update_label.bind(
+                    "<Button-1>", lambda event: webbrowser.open_new(update_url)
+                )
+                update_label.config(text="최신버전 X", fg="red")
+        else:
+            update_label.config(text="업데이트 확인 실패", fg="red")
+    except:
+        update_label.config(text="업데이트 확인 실패", fg="red")
 
 
 def open_circle():
@@ -238,9 +261,8 @@ def setup():
 
 
 def kbinput():
-    global temp
-    while True:
-        if keyboard.is_pressed("f9"):
+    while startkey_stored:
+        if keyboard.is_pressed(start_key):
             if state == "window":
                 threading.Thread(target=setup, daemon=True).start()
             # elif state == "open_circle":
@@ -304,18 +326,25 @@ def dataload(n: int, type) -> list:
 
                 ans = json_object["Ans"][str(n)]
                 speed = json_object["speed"]
+                start_key = json_object["start_key"]
         except:
             ans = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
             speed = 0
+            start_key = "f9"
             datamake()
     else:
         ans = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
         speed = 0
+        start_key = "f9"
         datamake()
     if type == "ans":
         return ans
-    else:
+    elif type == "start_key":
+        return start_key
+    elif type == "speed":
         return speed
+    else:
+        return None
 
 
 def datasave(n: int, ans: list):
@@ -329,7 +358,20 @@ def datasave(n: int, ans: list):
 
 
 def datamake():
-    json_object = {"Ans": {"0": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], "1": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], "2": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], "3": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], "4": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], "5": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], "6": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], "7": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]}, "speed": 0}
+    json_object = {
+        "Ans": {
+            "0": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+            "1": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+            "2": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+            "3": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+            "4": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+            "5": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+            "6": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+            "7": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+        },
+        "speed": 2,
+        "start_key": "f9",
+    }
     with open(file, "w") as f:
         json.dump(json_object, f)
 
@@ -349,15 +391,31 @@ def exit_window():
     window.destroy()
 
 
-thread_key = threading.Thread(target=kbinput, daemon=True)
-thread_key.start()
+def store_startkey():
+    global start_key, startkey_stored
+    startkey_stored = False
+    start_key = keyboard.read_key()
+
+    with open(file, "r") as f:
+        json_object = json.load(f)
+    json_object["start_key"] = start_key
+
+    with open(file, "w") as f:
+        json.dump(json_object, f)
+
+    time.sleep(0.2)
+    startkey_stored = True
+    thread_key = threading.Thread(target=kbinput, daemon=True)
+    thread_key.start()
+    startkey_button.config(text=start_key)
+
 
 # global window
 window = tk.Tk()
 
 
 window.title("TWA")
-window.geometry("300x300+100+100")
+window.geometry("400x300+100+100")
 window.resizable(False, False)
 
 
@@ -372,6 +430,60 @@ ready = False
 file = "C:\\ProDays\\PDAnsMacro.json"
 # root_num = 0
 root = []
+version = "v1.0.1"
+startkey_stored = True
+start_key = dataload(0, "start_key")
+thread_key = threading.Thread(target=kbinput, daemon=True)
+thread_key.start()
+
+
+frame_navigator = tk.Frame(window, width=400, height=45)
+frame_navigator.pack_propagate(False)
+frame_navigator.pack()
+
+# 업데이트 체크
+frame_update = tk.Frame(frame_navigator, width=200, height=45)
+frame_update.pack_propagate(False)
+frame_update.place(x=0, y=0)
+
+update_label = tk.Label(
+    frame_update,
+    text="업데이트 확인중...",
+    fg="gray",
+    relief="solid",
+    font=("맑은 고딕", 14, "bold"),
+    width=30,
+    height=20,
+    borderwidth=1.5,
+)
+update_label.pack()
+
+thread_version = threading.Thread(target=version_check, daemon=True)
+thread_version.start()
+
+
+# 설명 링크
+frame_descr = tk.Frame(frame_navigator, width=200, height=45)
+frame_descr.pack_propagate(False)
+frame_descr.place(x=200, y=0)
+
+descr_label = tk.Label(
+    frame_descr,
+    text="설명 확인하기",
+    fg="blue",
+    borderwidth=1.5,
+    relief="solid",
+    font=("맑은 고딕", 14, "bold"),
+    width=30,
+    height=20,
+)
+descr_label.pack()
+descr_label.bind(
+    "<Button-1>",
+    lambda event: webbrowser.open_new(
+        "https://github.com/Pro-Days/textmacro-with-animation#readme"
+    ),
+)
 
 
 # 애니메이션 속도
@@ -403,6 +515,45 @@ combobox_anspeed = tk.ttk.Combobox(
     justify="center",
 )
 
+
+frame_startkey = tk.Frame(window, width=251, height=45)
+frame_startkey.pack_propagate(False)
+frame_startkey.pack(pady=0)
+
+# 시작키설정
+frame_startkeyT = tk.Frame(frame_startkey, width=112.5, height=45)
+frame_startkeyT.pack_propagate(False)
+frame_startkeyT.place(x=0.5, y=0)
+
+tk.Label(
+    frame_startkeyT,
+    text="시작키설정",
+    fg="black",
+    borderwidth=1,
+    relief="solid",
+    font=("맑은 고딕", 10),
+    width=20,
+    height=10,
+).pack()
+
+frame_startkeyK = tk.Frame(frame_startkey, width=112.5, height=45)
+frame_startkeyK.pack_propagate(False)
+frame_startkeyK.place(x=137.5, y=0)
+
+startkey_button = tk.Button(
+    frame_startkeyK,
+    text=start_key,
+    width=10,
+    borderwidth=1,
+    relief="solid",
+    font=("맑은 고딕", 10),
+    bg="white",
+    anchor="center",
+    command=store_startkey,
+)
+startkey_button.place(width=112.5, height=45)
+
+
 speed = dataload(0, "speed")
 combobox_anspeed.current(speed)
 combobox_anspeed.pack()
@@ -411,7 +562,7 @@ combobox_anspeed.bind("<<ComboboxSelected>>", None)
 
 frame_quit = tk.Frame(window, width=100, height=50)
 frame_quit.pack_propagate(False)
-frame_quit.pack(pady=40)
+frame_quit.pack(pady=10)
 
 quit_bt = tk.Button(
     frame_quit,
