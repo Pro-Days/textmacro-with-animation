@@ -32,36 +32,71 @@ def version_check():
 
 
 def open_circle():
-    global state, root
+    global state, root, textlist_name
     state = "opening_circle"
     if a != 0:
         for x in range(a + 1):
             t = x / a
             # t = -20 * t**7 + 70 * t**6 - 84 * t**5 + 35 * t**4
             t = -2 * t**3 + 3 * t**2
-            for i in range(1, 9):
+            for i in range(8):
                 canvas.moveto(
-                    SubC[i - 1],
-                    cx - 2.5 * cr * math.sin(pi * t * i / 4) - sr,
+                    SubC[i],
+                    cx + 2.5 * cr * math.sin(pi * t * i / 4) - sr,
                     cy - 2.5 * cr * math.cos(pi * t * i / 4) - sr,
                 )
             root[-1].update()
             time.sleep(delay)
     else:
-        for i in range(1, 9):
+        for i in range(8):
             canvas.moveto(
-                SubC[i - 1],
-                cx - 2.5 * cr * math.sin(pi * i / 4) - sr,
+                SubC[i],
+                cx + 2.5 * cr * math.sin(pi * i / 4) - sr,
                 cy - 2.5 * cr * math.cos(pi * i / 4) - sr,
             )
         root[-1].update()
     state = "open_circle"
 
+    textlist_name = [
+        tk.Label(
+            canvas,
+            text=i,
+            fg="#303030",
+            # relief="solid",
+            bg=gray_color,
+            font=("맑은 고딕", 10, "bold"),
+        )
+        for i in range(8)
+    ]
+
+    global ready
+    ready = False
+
+    names = dataload("name")
+
+    for i, j in enumerate(textlist_name):
+        j.config(text=names[i])
+        j.bind(
+            "<Button-1>",
+            lambda event, n=i: open_menu(n) if state == "open_circle" else None,
+        )
+        j.place(
+            width=sr,
+            height=sr,
+            x=(cx + 2.5 * cr * math.sin(pi * i / 4) - sr * 0.5),
+            y=(cy - 2.5 * cr * math.cos(pi * i / 4) - sr * 0.5),
+        )
+
 
 def open_menu(n):
     # print(n)
-    global state, lcanvas, root
+    global state, lcanvas, root, textlist_name
     state = "opening_menu"
+    # print(n)
+
+    for i, j in enumerate(textlist_name):
+        j.destroy() if i != n else None
+    # print(textlist_name)
 
     lc_w = round((fw - 13 * sr) * 0.04) * 25
     lc_h = round((fh - 6 * sr) * 0.04) * 25
@@ -71,21 +106,30 @@ def open_menu(n):
     lcanvas = tk.Canvas(root[-1])
     # print("b")
     lcanvas.place(x=10 * sr, y=3 * sr, width=0, height=0)
-    # textbar = canvas.create_rectangle(10 * sr, 3 * sr, 10 * sr, 3 * sr, fill="#D9D9D9")
+    # textbar = canvas.create_rectangle(10 * sr, 3 * sr, 10 * sr, 3 * sr, fill=gray_color)
     if a != 0:
         for x in range(a, -1, -1):
             t = x / a
             # t = -20 * t**7 + 70 * t**6 - 84 * t**5 + 35 * t**4
             t = -2 * t**3 + 3 * t**2
-            for i in range(1, 9):
+            for i in range(8):
                 canvas.moveto(
-                    SubC[i - 1],
+                    SubC[i],
                     5 * sr
-                    - 2.5 * cr * math.sin(pi * t * i / 4)
+                    - 2.5 * cr * math.sin(pi * t * (i + 1) / 4)
                     - sr
                     + (cx - 5 * sr) * t,
-                    cy - 2.5 * cr * math.cos(pi * t * i / 4) - sr,
+                    cy - 2.5 * cr * math.cos(pi * t * (i + 1) / 4) - sr,
                 )
+            textlist_name[n].place(
+                x=(
+                    5 * sr
+                    - 2.5 * cr * math.sin(pi * t * (8 - n) / 4)
+                    - sr * 0.5
+                    + (cx - 5 * sr) * t
+                ),
+                y=(cy - 2.5 * cr * math.cos(pi * t * (8 - n) / 4) - sr * 0.5),
+            )
             canvas.moveto(CenterC, 5 * sr - cr + (cx - 5 * sr) * t, cy - cr)
 
             lcanvas.place(
@@ -168,7 +212,7 @@ def open_menu(n):
     global ready
     ready = False
 
-    ans = dataload(n, "ans")
+    ans = dataload("ans", n)
 
     for i, j in enumerate(textlist_title):
         j.config(text=i)
@@ -221,19 +265,26 @@ def setup():
     cr = fw * 0.05
     sr = cr * 0.5
 
-    CenterC = canvas.create_oval(cx - cr, cy - cr, cx + cr, cy + cr)
-    canvas.itemconfig(CenterC, fill="#D9D9D9")
+    CenterC = canvas.create_oval(cx - cr, cy - cr, cx + cr, cy + cr, fill=gray_color)
+    canvas.tag_bind(
+        CenterC,
+        "<Double-Button-1>",
+        lambda event: edit_name_onoff(),
+    )
 
     sc_y = cy - cr - 3 * sr
 
     SubC = []
-    for i in range(1, 9):
-        SubC.append(canvas.create_oval(cx - sr, sc_y - sr, cx + sr, sc_y + sr))
-        canvas.itemconfig(SubC[-1], fill="#D9D9D9")
+    for i in range(8):
+        SubC.append(
+            canvas.create_oval(
+                cx - sr, sc_y - sr, cx + sr, sc_y + sr, fill=gray_color, outline=""
+            )
+        )
         canvas.tag_bind(
             SubC[-1],
             "<Button-1>",
-            lambda event, n=i - 1: open_menu(n) if state == "open_circle" else None,
+            lambda event, n=i: open_menu(n) if state == "open_circle" else None,
         )
         # canvas.tag_bind(
         #     SubC[-1],
@@ -271,6 +322,33 @@ def kbinput():
         time.sleep(0.05)
 
 
+def edit_name_onoff():
+    global naming, textlist_name
+    if state == "open_circle":
+        if naming:
+            naming = False
+            canvas.itemconfig(CenterC, fill=gray_color)
+
+            for i, j in enumerate(textlist_name):
+                j.bind(
+                    "<Button-1>",
+                    lambda event, n=i: open_menu(n) if state == "open_circle" else None,
+                )
+        else:
+            naming = True
+            canvas.itemconfig(CenterC, fill="#A0B0FF")
+
+            for i, j in enumerate(textlist_name):
+                j.bind(
+                    "<Button-1>",
+                    lambda event, i=i, j=j: edit_name(i, j)
+                    if state == "open_circle"
+                    else None,
+                )
+    else:
+        pass
+
+
 def print_text(c, i):
     global root
     if ready:
@@ -289,6 +367,35 @@ def write_text(text):
     # window.destroy()
 
 
+def edit_name(i, j):
+    text = j.cget("text")
+
+    editing_ent = tk.Entry(
+        canvas,
+        fg="gray",
+        relief="solid",
+        bg="#f0f0f0",
+        font=("맑은 고딕", 10, "bold"),
+    )
+    editing_ent.place(
+        width=j.winfo_width(), height=j.winfo_height(), x=j.winfo_x(), y=j.winfo_y()
+    )
+    editing_ent.insert(0, text)
+    editing_ent.bind(
+        "<Return>",
+        lambda event, i=i, j=j, ent=editing_ent: saveNameEntryValue(i, j, ent),
+    )
+
+
+def saveNameEntryValue(i, j, ent):
+    names = dataload("name")
+    names[i] = ent.get()
+    datasave(names, type="names")
+    # print("destroy", ent.get())
+    j.config(text=ent.get())
+    ent.destroy()
+
+
 def edit_text(i, j, x, y, n, ans):
     if ready:
         text = j.cget("text")
@@ -304,7 +411,7 @@ def edit_text(i, j, x, y, n, ans):
         editing_ent.insert(0, text)
         editing_ent.bind(
             "<Return>",
-            lambda event, text=text, i=i, j=j, ent=editing_ent, ans=ans: saveEntryValue(
+            lambda event, i=i, j=j, ent=editing_ent, ans=ans: saveEntryValue(
                 i, j, ent, n, ans
             ),
         )
@@ -312,13 +419,13 @@ def edit_text(i, j, x, y, n, ans):
 
 def saveEntryValue(i, j, ent, n, ans: list):
     ans[i] = ent.get()
-    datasave(n, ans)
+    datasave(ans, type="ans", n=n)
     # print("destroy", ent.get())
     j.config(text=ent.get())
     ent.destroy()
 
 
-def dataload(n: int, type) -> list:
+def dataload(type, n=0) -> list:
     if os.path.isfile(file):
         try:
             with open(file, "r") as f:
@@ -327,15 +434,18 @@ def dataload(n: int, type) -> list:
                 ans = json_object["Ans"][str(n)]
                 speed = json_object["speed"]
                 start_key = json_object["start_key"]
+                names = json_object["Names"]
         except:
             ans = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
             speed = 0
             start_key = "f9"
+            names = ["1", "2", "3", "4", "5", "6", "7", "8"]
             datamake()
     else:
         ans = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
         speed = 0
         start_key = "f9"
+        names = ["1", "2", "3", "4", "5", "6", "7", "8"]
         datamake()
     if type == "ans":
         return ans
@@ -343,15 +453,20 @@ def dataload(n: int, type) -> list:
         return start_key
     elif type == "speed":
         return speed
+    elif type == "name":
+        return names
     else:
         return None
 
 
-def datasave(n: int, ans: list):
+def datasave(savedata: list, type: str, n=0):
     with open(file, "r") as f:
         json_object = json.load(f)
 
-    json_object["Ans"][str(n)] = ans
+    if type == "ans":
+        json_object["Ans"][str(n)] = savedata
+    elif type == "names":
+        json_object["Names"] = savedata
 
     with open(file, "w") as f:
         json.dump(json_object, f)
@@ -371,6 +486,7 @@ def datamake():
         },
         "speed": 2,
         "start_key": "f9",
+        "Names": ["1", "2", "3", "4", "5", "6", "7", "8"],
     }
     with open(file, "w") as f:
         json.dump(json_object, f)
@@ -430,9 +546,11 @@ ready = False
 file = "C:\\ProDays\\PDAnsMacro.json"
 # root_num = 0
 root = []
-version = "v1.0.1"
+version = "v1.2.0"
+naming = False
 startkey_stored = True
-start_key = dataload(0, "start_key")
+gray_color = "#b0b0b0"
+start_key = dataload("start_key")
 thread_key = threading.Thread(target=kbinput, daemon=True)
 thread_key.start()
 
@@ -448,10 +566,10 @@ frame_update.place(x=0, y=0)
 
 update_label = tk.Label(
     frame_update,
-    text="업데이트 확인중...",
+    text="업데이트 확인중",
     fg="gray",
     relief="solid",
-    font=("맑은 고딕", 14, "bold"),
+    font=("맑은 고딕", 12, "bold"),
     width=30,
     height=20,
     borderwidth=1.5,
@@ -473,7 +591,7 @@ descr_label = tk.Label(
     fg="blue",
     borderwidth=1.5,
     relief="solid",
-    font=("맑은 고딕", 14, "bold"),
+    font=("맑은 고딕", 12, "bold"),
     width=30,
     height=20,
 )
@@ -554,7 +672,7 @@ startkey_button = tk.Button(
 startkey_button.place(width=112.5, height=45)
 
 
-speed = dataload(0, "speed")
+speed = dataload("speed")
 combobox_anspeed.current(speed)
 combobox_anspeed.pack()
 combobox_anspeed.bind("<<ComboboxSelected>>", None)
