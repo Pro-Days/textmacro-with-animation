@@ -10,6 +10,14 @@ import requests
 import webbrowser
 
 
+# 색 원래대로 복구
+# 작은 화면에서 실행했을 때 생기는 사각형 제거
+# 클릭한 원이 가장 앞으로 나오게 해서 원 테두리 만들기
+# open_menu에서 원 클릭해서 다시 이전 단계로
+# 원 회전 방향 복구
+# 색 커스터마이징
+
+
 def version_check():
     try:
         response = requests.get(
@@ -34,9 +42,9 @@ def version_check():
 def open_circle():
     global state, root, textlist_name
     state = "opening_circle"
-    if a != 0:
-        for x in range(a + 1):
-            t = x / a
+    if frame != 0:
+        for x in range(frame + 1):
+            t = x / frame
             # t = -20 * t**7 + 70 * t**6 - 84 * t**5 + 35 * t**4
             t = -2 * t**3 + 3 * t**2
             for i in range(8):
@@ -48,13 +56,14 @@ def open_circle():
             root[-1].update()
             time.sleep(delay)
     else:
-        for i in range(8):
-            canvas.moveto(
-                SubC[i],
-                cx + 2.5 * cr * math.sin(pi * i / 4) - sr,
-                cy - 2.5 * cr * math.cos(pi * i / 4) - sr,
-            )
-        root[-1].update()
+        pass
+    for i in range(8):
+        canvas.moveto(
+            SubC[i],
+            cx + 2.5 * cr * math.sin(pi * i / 4) - sr,
+            cy - 2.5 * cr * math.cos(pi * i / 4) - sr,
+        )
+    root[-1].update()
     state = "open_circle"
 
     textlist_name = [
@@ -63,14 +72,11 @@ def open_circle():
             text=i,
             fg="#303030",
             # relief="solid",
-            bg=gray_color,
+            bg=colors[i],
             font=("맑은 고딕", 10, "bold"),
         )
         for i in range(8)
     ]
-
-    global ready
-    ready = False
 
     names = dataload("name")
 
@@ -93,6 +99,7 @@ def open_menu(n):
     global state, lcanvas, root, textlist_name
     state = "opening_menu"
     # print(n)
+    # print(lcanvas)
 
     for i, j in enumerate(textlist_name):
         j.destroy() if i != n else None
@@ -100,89 +107,22 @@ def open_menu(n):
 
     lc_w = round((fw - 13 * sr) * 0.04) * 25
     lc_h = round((fh - 6 * sr) * 0.04) * 25
-    # print("a")
+    # print("frame")
 
-    # print(root)
     lcanvas = tk.Canvas(root[-1])
-    # print("b")
     lcanvas.place(x=10 * sr, y=3 * sr, width=0, height=0)
-    # textbar = canvas.create_rectangle(10 * sr, 3 * sr, 10 * sr, 3 * sr, fill=gray_color)
-    if a != 0:
-        for x in range(a, -1, -1):
-            t = x / a
-            # t = -20 * t**7 + 70 * t**6 - 84 * t**5 + 35 * t**4
-            t = -2 * t**3 + 3 * t**2
-            for i in range(8):
-                canvas.moveto(
-                    SubC[i],
-                    5 * sr
-                    - 2.5 * cr * math.sin(pi * t * (i + 1) / 4)
-                    - sr
-                    + (cx - 5 * sr) * t,
-                    cy - 2.5 * cr * math.cos(pi * t * (i + 1) / 4) - sr,
-                )
-            textlist_name[n].place(
-                x=(
-                    5 * sr
-                    - 2.5 * cr * math.sin(pi * t * (8 - n) / 4)
-                    - sr * 0.5
-                    + (cx - 5 * sr) * t
-                ),
-                y=(cy - 2.5 * cr * math.cos(pi * t * (8 - n) / 4) - sr * 0.5),
-            )
-            canvas.moveto(CenterC, 5 * sr - cr + (cx - 5 * sr) * t, cy - cr)
 
-            lcanvas.place(
-                x=10 * sr,
-                y=3 * sr,
-                width=lc_w * (1 - t),
-                height=lc_h * (1 - t),
-            )
-            root[-1].update()
+    for i in range(8):
+        canvas.tag_raise(SubC[i])
+    canvas.tag_raise(SubC[n])
+    # canvas.lower(lcanvas)
+    # canvas.itemconfig(SubC[7 - n], fill="red")
+    # print(root)
 
-            time.sleep(delay)
-    else:
-        for i in range(1, 9):
-            canvas.moveto(
-                SubC[i - 1],
-                4 * sr,
-                cy - 2.5 * cr - sr,
-            )
-        canvas.moveto(CenterC, 5 * sr - cr, cy - cr)
+    # root[-1].lower(lcanvas)
+    # print("b")
+    # root[-1].lift(canvas)
 
-        lcanvas.place(
-            x=10 * sr,
-            y=3 * sr,
-            width=lc_w,
-            height=lc_h,
-        )
-        root[-1].update()
-    # print(lc_w, lc_h)
-    # 10sr ~ fw - 3sr => fw - 13sr
-    # print("a")
-    textlist = []
-    for i in range(3):
-        text_temp = [
-            canvas.create_rectangle(
-                10 * sr + 10,
-                3 * sr + 10 + 110 * i,
-                fw / 4 + 6.75 * sr - 5,
-                3 * sr + 100 + 10 + 110 * i,
-                fill="#a0a0a0",
-            ),
-            canvas.create_rectangle(
-                fw / 4 + 6.75 * sr + 5,
-                3 * sr + 10 + 110 * i,
-                fw - 3 * sr - 10,
-                3 * sr + 100 + 10 + 110 * i,
-                fill="#a0a0a0",
-            ),
-        ]
-        textlist.append(text_temp)
-
-    # scrollbar = tk.Scrollbar(lcanvas, command=lcanvas.yview, orient=tk.VERTICAL)
-    # scrollbar.pack(side="right", fill="both")
-    # lcanvas.configure(yscrollcommand=scrollbar.set)
     count = 10
     textt_w = round(lc_w * 0.1)
     textc_w = round(lc_w * 0.9)
@@ -216,7 +156,12 @@ def open_menu(n):
 
     for i, j in enumerate(textlist_title):
         j.config(text=i)
-        j.bind("<Button-1>", lambda event, c=textlist_content, i=i: print_text(c, i))
+        j.bind(
+            "<Button-1>",
+            lambda event, c=textlist_content, i=i: print_text(c, i)
+            if state == "open_menu"
+            else None,
+        )
 
         j.place(width=textt_w, height=text_h, x=0, y=text_h * i)
 
@@ -226,17 +171,198 @@ def open_menu(n):
             "<Double-Button-1>",
             lambda event, j=j, i=i, x=textt_w, y=text_h, n=n: edit_text(
                 i, j, x, y, n, ans
-            ),
+            )
+            if state == "open_menu"
+            else None,
         )
 
         j.place(width=textc_w, height=text_h, x=textt_w, y=text_h * i)
     ready = True
 
-    state = "opening_menu"
+    # textbar = canvas.create_rectangle(10 * sr, 3 * sr, 10 * sr, 3 * sr, fill=gray_color)
+    if frame != 0:
+        for x in range(frame, -1, -1):
+            t = x / frame
+            # t = -20 * t**7 + 70 * t**6 - 84 * t**5 + 35 * t**4
+            t = -2 * t**3 + 3 * t**2
+            for i in range(8):
+                canvas.moveto(
+                    SubC[i],
+                    5 * sr
+                    - 2.5 * cr * math.sin(pi * t * (8 - i) / 4)
+                    - sr
+                    + (cx - 5 * sr) * t,
+                    cy - 2.5 * cr * math.cos(pi * t * (8 - i) / 4) - sr,
+                )
+                # cx + 2.5 * cr * math.sin(pi * t * i / 4) - sr,
+                #     cy - 2.5 * cr * math.cos(pi * t * i / 4) - sr
+            textlist_name[n].place(
+                x=(
+                    5 * sr
+                    - 2.5 * cr * math.sin(pi * t * (8 - n) / 4)
+                    - sr * 0.5
+                    + (cx - 5 * sr) * t
+                ),
+                y=(cy - 2.5 * cr * math.cos(pi * t * (8 - n) / 4) - sr * 0.5),
+            )
+            canvas.moveto(CenterC, 5 * sr - cr + (cx - 5 * sr) * t, cy - cr)
+
+            lcanvas.place(
+                x=10 * sr,
+                y=3 * sr,
+                width=lc_w * (1 - t),
+                height=lc_h * (1 - t),
+            )
+            root[-1].update()
+
+            time.sleep(delay)
+    else:
+        pass
+    for i in range(1, 9):
+        canvas.moveto(
+            SubC[i - 1],
+            4 * sr,
+            cy - 2.5 * cr - sr,
+        )
+    canvas.moveto(CenterC, 5 * sr - cr, cy - cr)
+    textlist_name[n].place(
+        x=(4.5 * sr),
+        y=(cy - 2.5 * cr - sr * 0.5),
+    )
+
+    lcanvas.place(
+        x=10 * sr,
+        y=3 * sr,
+        width=lc_w,
+        height=lc_h,
+    )
+    root[-1].update()
+    # print(lc_w, lc_h)
+    # 10sr ~ fw - 3sr => fw - 13sr
+    # print("frame")
+    # textlist = []
+
+    # scrollbar = tk.Scrollbar(lcanvas, command=lcanvas.yview, orient=tk.VERTICAL)
+    # scrollbar.pack(side="right", fill="both")
+    # lcanvas.configure(yscrollcommand=scrollbar.set)
+
+    textlist_name[n].bind(
+        "<Button-1>",
+        lambda event, n=n: close_menu(n) if state == "open_menu" else None,
+    )
+
+    for i in range(8):
+        canvas.tag_bind(
+            SubC[i],
+            "<Button-1>",
+            lambda event, n=n: close_menu(n) if state == "open_menu" else None,
+        )
+
+    state = "open_menu"
+
+
+def close_menu(n):
+    # print(n)
+    global state, lcanvas, root, textlist_name
+    state = "closing_menu"
+
+    lc_w = round((fw - 13 * sr) * 0.04) * 25
+    lc_h = round((fh - 6 * sr) * 0.04) * 25
+    # time.sleep(delay * 100)
+    # textbar = canvas.create_rectangle(10 * sr, 3 * sr, 10 * sr, 3 * sr, fill=gray_color)
+    if frame != 0:
+        # print("frame")
+        for x in range(frame):
+            t = x / frame
+            # t = -20 * t**7 + 70 * t**6 - 84 * t**5 + 35 * t**4
+            t = -2 * t**3 + 3 * t**2
+            for i in range(8):
+                canvas.moveto(
+                    SubC[i],
+                    5 * sr
+                    - 2.5 * cr * math.sin(pi * t * (8 - i) / 4)
+                    - sr
+                    + (cx - 5 * sr) * t,
+                    cy - 2.5 * cr * math.cos(pi * t * (8 - i) / 4) - sr,
+                )
+            textlist_name[n].place(
+                x=(
+                    5 * sr
+                    - 2.5 * cr * math.sin(pi * t * (8 - n) / 4)
+                    - sr * 0.5
+                    + (cx - 5 * sr) * t
+                ),
+                y=(cy - 2.5 * cr * math.cos(pi * t * (8 - n) / 4) - sr * 0.5),
+            )
+            canvas.moveto(CenterC, 5 * sr - cr + (cx - 5 * sr) * t, cy - cr)
+
+            lcanvas.place(
+                x=10 * sr,
+                y=3 * sr,
+                width=lc_w * (1 - t),
+                height=lc_h * (1 - t),
+            )
+
+            root[-1].update()
+            time.sleep(delay)
+    else:
+        pass
+    for i in range(8):
+        canvas.moveto(
+            SubC[i],
+            cx + 2.5 * cr * math.sin(pi * i / 4) - sr,
+            cy - 2.5 * cr * math.cos(pi * i / 4) - sr,
+        )
+    canvas.moveto(CenterC, -cr + cx, cy - cr)
+    root[-1].update()
+
+    lcanvas.destroy()
+    textlist_name[n].destroy()
+    for i in range(8):
+        canvas.tag_bind(
+            SubC[i],
+            "<Button-1>",
+            lambda event, n=i: open_menu(n)
+            if state == "open_circle" and not naming
+            else None,
+        )
+
+    textlist_name = [
+        tk.Label(
+            canvas,
+            text=i,
+            fg="#303030",
+            # relief="solid",
+            bg=colors[i],
+            font=("맑은 고딕", 10, "bold"),
+        )
+        for i in range(8)
+    ]
+
+    for i in range(8):
+        canvas.itemconfig(SubC[i], fill=colors[i])
+        textlist_name[i].config(bg=colors[i])
+
+    names = dataload("name")
+
+    for i, j in enumerate(textlist_name):
+        j.config(text=names[i])
+        j.bind(
+            "<Button-1>",
+            lambda event, n=i: open_menu(n) if state == "open_circle" else None,
+        )
+        j.place(
+            width=sr,
+            height=sr,
+            x=(cx + 2.5 * cr * math.sin(pi * i / 4) - sr * 0.5),
+            y=(cy - 2.5 * cr * math.cos(pi * i / 4) - sr * 0.5),
+        )
+
+    state = "open_circle"
 
 
 def setup():
-    global root, fw, fh, fl, ft, fr, fb, canvas, cx, cy, cr, sr, sc_y, a, CenterC, SubC, fore, delay
+    global root, fw, fh, fl, ft, fr, fb, canvas, cx, cy, cr, sr, sc_y, frame, CenterC, SubC, fore, delay, lcanvas
 
     fore = pyautogui.getActiveWindow()  # type: ignore
     fw, fh, fl, ft, fr, fb = (
@@ -250,20 +376,23 @@ def setup():
 
     root.append(tk.Tk())
     root[-1].geometry(f"{fw}x{fh}+{fl}+{ft}")
-    root[-1].wm_attributes("-transparentcolor", "white")
+    root[-1].wm_attributes("-transparentcolor", "#fffffe")
     root[-1].wm_attributes("-topmost", 1)
     root[-1].attributes("-alpha", 0.75)
     root[-1].overrideredirect(True)
-    canvas = tk.Canvas(
-        root[-1], width=fw, height=fh, bg="white", bd=0, highlightthickness=0
-    )
-
-    canvas.pack()
 
     cx = fw * 0.5
     cy = fh * 0.5
     cr = fw * 0.05
     sr = cr * 0.5
+
+    # print(lcanvas)
+
+    canvas = tk.Canvas(
+        root[-1], width=fw, height=fh, bg="#fffffe", bd=0, highlightthickness=0
+    )
+
+    canvas.pack()
 
     CenterC = canvas.create_oval(cx - cr, cy - cr, cx + cr, cy + cr, fill=gray_color)
     canvas.tag_bind(
@@ -275,16 +404,17 @@ def setup():
     sc_y = cy - cr - 3 * sr
 
     SubC = []
+
     for i in range(8):
         SubC.append(
-            canvas.create_oval(
-                cx - sr, sc_y - sr, cx + sr, sc_y + sr, fill=gray_color, outline=""
-            )
+            canvas.create_oval(cx - sr, sc_y - sr, cx + sr, sc_y + sr, fill=colors[i])
         )
         canvas.tag_bind(
             SubC[-1],
             "<Button-1>",
-            lambda event, n=i: open_menu(n) if state == "open_circle" else None,
+            lambda event, n=i: open_menu(n)
+            if state == "open_circle" and not naming
+            else None,
         )
         # canvas.tag_bind(
         #     SubC[-1],
@@ -303,8 +433,8 @@ def setup():
 
     # https://www.figma.com/file/jw0nKJKBxyUwgF7i1bSDNn/Untitled?node-id=1-105&t=bU9TFem7HstFPAHs-0
     global combobox_anspeed
-    a = round(90 / int(combobox_anspeed.get())) if combobox_anspeed.get() != "x" else 0
-    delay = 0.0166
+    delay = 0.016
+    # print(frame)
 
     open_circle()
 
@@ -312,14 +442,28 @@ def setup():
 
 
 def kbinput():
+    global state
     while startkey_stored:
+        # print("111")
         if keyboard.is_pressed(start_key):
+            # print("123")
             if state == "window":
                 threading.Thread(target=setup, daemon=True).start()
             # elif state == "open_circle":
             #     threading.Thread(target=open_menu, daemon=True, args=n).start()
             time.sleep(0.2)
         time.sleep(0.05)
+
+
+def framecount():
+    global frame
+    while True:
+        frame = (
+            round(90 / int(combobox_anspeed.get()))
+            if combobox_anspeed.get() != "x"
+            else 0
+        )
+        time.sleep(0.2)
 
 
 def edit_name_onoff():
@@ -435,17 +579,38 @@ def dataload(type, n=0) -> list:
                 speed = json_object["speed"]
                 start_key = json_object["start_key"]
                 names = json_object["Names"]
+                colors = json_object["colors"]
         except:
             ans = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
             speed = 0
             start_key = "f9"
             names = ["1", "2", "3", "4", "5", "6", "7", "8"]
+            colors = [
+                "#ff6961",
+                "#ffb480",
+                "#f8f38d",
+                "#42d6a4",
+                "#08cad1",
+                "#59adf6",
+                "#9d94ff",
+                "#c780e8",
+            ]
             datamake()
     else:
         ans = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
         speed = 0
         start_key = "f9"
         names = ["1", "2", "3", "4", "5", "6", "7", "8"]
+        colors = [
+            "#ff6961",
+            "#ffb480",
+            "#f8f38d",
+            "#42d6a4",
+            "#08cad1",
+            "#59adf6",
+            "#9d94ff",
+            "#c780e8",
+        ]
         datamake()
     if type == "ans":
         return ans
@@ -455,6 +620,8 @@ def dataload(type, n=0) -> list:
         return speed
     elif type == "name":
         return names
+    elif type == "colors":
+        return colors
     else:
         return None
 
@@ -487,24 +654,35 @@ def datamake():
         "speed": 2,
         "start_key": "f9",
         "Names": ["1", "2", "3", "4", "5", "6", "7", "8"],
+        "colors": [
+            "#ff6961",
+            "#ffb480",
+            "#f8f38d",
+            "#42d6a4",
+            "#08cad1",
+            "#59adf6",
+            "#9d94ff",
+            "#c780e8",
+        ],
     }
     with open(file, "w") as f:
         json.dump(json_object, f)
 
 
-def exit_window():
+def saveall():
     global combobox_anspeed
     speed = combobox_anspeed.get()
     speed = int(speed) - 1 if speed != "x" else 5
+
+    colors = [colors_var[i].get() for i in range(8)]
     with open(file, "r") as f:
         json_object = json.load(f)
 
     json_object["speed"] = speed
+    json_object["colors"] = colors
 
     with open(file, "w") as f:
         json.dump(json_object, f)
-
-    window.destroy()
 
 
 def store_startkey():
@@ -526,12 +704,55 @@ def store_startkey():
     startkey_button.config(text=start_key)
 
 
+def rt_colorchange(i, j):
+    global colors
+    try:
+        j.configure(fg=colors_var[i].get())
+
+        rgb = str(colors_var[i].get()).replace("#", "")
+
+        rgb = (int(rgb[:2], 16), int(rgb[2:4], 16), int(rgb[4:], 16))
+        brightness = calculate_brightness(rgb)
+        if brightness >= 0.5:
+            j.configure(bg="#303030")
+        else:
+            j.configure(bg="#ffffff")
+
+        colors = [colors_var[i].get() for i in range(8)]
+
+        # if state == ("open_circle" or "open_menu"):
+        try:
+            for i in range(8):
+                canvas.itemconfig(SubC[i], fill=colors[i])
+        except:
+            pass
+
+        for i in range(8):
+            try:
+                textlist_name[i].config(bg=colors[i])
+            except:
+                pass
+    except:
+        j.configure(fg="#303030")
+        j.configure(bg="#ffffff")
+
+
+def calculate_brightness(rgb):
+    r_weight = 0.299
+    g_weight = 0.587
+    b_weight = 0.114
+
+    brightness = (rgb[0] * r_weight + rgb[1] * g_weight + rgb[2] * b_weight) / 255
+
+    return brightness
+
+
 # global window
 window = tk.Tk()
 
 
 window.title("TWA")
-window.geometry("400x300+100+100")
+window.geometry("400x400+100+100")
 window.resizable(False, False)
 
 
@@ -546,11 +767,12 @@ ready = False
 file = "C:\\ProDays\\PDAnsMacro.json"
 # root_num = 0
 root = []
-version = "v1.2.0"
+version = "v1.3.0"
 naming = False
 startkey_stored = True
-gray_color = "#b0b0b0"
+gray_color = "#d9d9d9"
 start_key = dataload("start_key")
+
 thread_key = threading.Thread(target=kbinput, daemon=True)
 thread_key.start()
 
@@ -623,7 +845,7 @@ tk.Label(
 
 frame_anspeedC = tk.Frame(window, width=100, height=50)
 frame_anspeedC.pack_propagate(False)
-frame_anspeedC.pack(pady=10)
+frame_anspeedC.pack(pady=0)
 
 combobox_anspeed = tk.ttk.Combobox(
     frame_anspeedC,
@@ -677,23 +899,64 @@ combobox_anspeed.current(speed)
 combobox_anspeed.pack()
 combobox_anspeed.bind("<<ComboboxSelected>>", None)
 
+thread_frame = threading.Thread(target=framecount, daemon=True)
+thread_frame.start()
+
+
+frame_colors = tk.Frame(window, width=400, height=80)
+frame_colors.pack_propagate(False)
+frame_colors.pack(pady=20)
+
+colors_var = [tk.StringVar() for i in range(8)]
+colors = dataload("colors")
+colors_entry = [
+    tk.Entry(
+        frame_colors,
+        textvariable=colors_var[i],
+        fg=colors[i],
+        borderwidth=1,
+        relief="solid",
+        justify="center",
+        font=("맑은 고딕", 10),
+    )
+    for i in range(8)
+]
+
+for i, j in enumerate(colors_entry):
+    if i < 4:
+        j.place(x=i * 100, y=0, width=100, height=40)
+    else:
+        j.place(x=(i - 4) * 100, y=40, width=100, height=40)
+    colors_var[i].set(colors[i])
+
+    rgb = str(colors_var[i].get()).replace("#", "")
+
+    rgb = (int(rgb[:2], 16), int(rgb[2:4], 16), int(rgb[4:], 16))
+    brightness = calculate_brightness(rgb)
+    if brightness >= 0.6:
+        j.configure(bg="#303030")
+    else:
+        j.configure(bg="#ffffff")
+
+    # colors_var[i].trace("w", lambda a, b, c, i=i: print(i))
+    colors_var[i].trace("w", lambda a, b, c, i=i, j=j: rt_colorchange(i, j))
+
 
 frame_quit = tk.Frame(window, width=100, height=50)
 frame_quit.pack_propagate(False)
-frame_quit.pack(pady=10)
+frame_quit.pack(pady=0)
 
 quit_bt = tk.Button(
     frame_quit,
-    text="QUIT",
+    text="저장",
     width=100,
     borderwidth=1,
     relief="solid",
     font=("맑은 고딕", 10),
     bg="white",
     anchor="center",
-    command=exit_window,
+    command=saveall,
 )
 quit_bt.pack()
-
 
 window.mainloop()
