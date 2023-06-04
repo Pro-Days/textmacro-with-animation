@@ -1,4 +1,4 @@
-import pyautogui
+import pyautogui, pyperclip, clipboard
 import time
 import math
 import tkinter as tk
@@ -8,14 +8,6 @@ import os
 import json
 import requests
 import webbrowser
-
-
-# 색 원래대로 복구
-# 작은 화면에서 실행했을 때 생기는 사각형 제거
-# 클릭한 원이 가장 앞으로 나오게 해서 원 테두리 만들기
-# open_menu에서 원 클릭해서 다시 이전 단계로
-# 원 회전 방향 복구
-# 색 커스터마이징
 
 
 def version_check():
@@ -43,9 +35,8 @@ def open_circle():
     global state, root, textlist_name
     state = "opening_circle"
     if frame != 0:
-        for x in range(frame + 1):
+        for x in range(frame):
             t = x / frame
-            # t = -20 * t**7 + 70 * t**6 - 84 * t**5 + 35 * t**4
             t = -2 * t**3 + 3 * t**2
             for i in range(8):
                 canvas.moveto(
@@ -78,6 +69,16 @@ def open_circle():
         for i in range(8)
     ]
 
+    for i in range(8):
+        rgb = colors[i].replace("#", "")
+
+        rgb = (int(rgb[:2], 16), int(rgb[2:4], 16), int(rgb[4:], 16))
+        brightness = calculate_brightness(rgb)
+        if brightness >= 0.5:
+            textlist_name[i].config(fg="#303030")
+        else:
+            textlist_name[i].config(fg="#ffffff")
+
     names = dataload("name")
 
     for i, j in enumerate(textlist_name):
@@ -96,7 +97,7 @@ def open_circle():
 
 def open_menu(n):
     # print(n)
-    global state, lcanvas, root, textlist_name
+    global state, lcanvas, root, textlist_name, lc_w, lc_h
     state = "opening_menu"
     # print(n)
     # print(lcanvas)
@@ -181,35 +182,30 @@ def open_menu(n):
 
     # textbar = canvas.create_rectangle(10 * sr, 3 * sr, 10 * sr, 3 * sr, fill=gray_color)
     if frame != 0:
-        for x in range(frame, -1, -1):
-            t = x / frame
-            # t = -20 * t**7 + 70 * t**6 - 84 * t**5 + 35 * t**4
-            t = -2 * t**3 + 3 * t**2
+        sr4 = 4 * sr
+        sr05 = 0.5 * sr
+        cysr = cy - sr
+        srcr = 5 * sr - cr
+        cxsr = cx - 5 * sr
+        for x in range(frame - 1, -1, -1):
+            t = precalc_menu[x][0][2]
+            cxsrt = cxsr * t
             for i in range(8):
+                moveto_x = sr4 - cr * precalc_menu[x][i][0] + cxsrt
+                moveto_y = cysr - cr * precalc_menu[x][i][1]
                 canvas.moveto(
                     SubC[i],
-                    5 * sr
-                    - 2.5 * cr * math.sin(pi * t * (8 - i) / 4)
-                    - sr
-                    + (cx - 5 * sr) * t,
-                    cy - 2.5 * cr * math.cos(pi * t * (8 - i) / 4) - sr,
+                    moveto_x,
+                    moveto_y,
                 )
-                # cx + 2.5 * cr * math.sin(pi * t * i / 4) - sr,
-                #     cy - 2.5 * cr * math.cos(pi * t * i / 4) - sr
-            textlist_name[n].place(
-                x=(
-                    5 * sr
-                    - 2.5 * cr * math.sin(pi * t * (8 - n) / 4)
-                    - sr * 0.5
-                    + (cx - 5 * sr) * t
-                ),
-                y=(cy - 2.5 * cr * math.cos(pi * t * (8 - n) / 4) - sr * 0.5),
-            )
-            canvas.moveto(CenterC, 5 * sr - cr + (cx - 5 * sr) * t, cy - cr)
+                if i == n:
+                    textlist_name[i].place(
+                        x=moveto_x + sr05,
+                        y=moveto_y + sr05,
+                    )
+            canvas.moveto(CenterC, srcr + cxsrt)
 
             lcanvas.place(
-                x=10 * sr,
-                y=3 * sr,
                 width=lc_w * (1 - t),
                 height=lc_h * (1 - t),
             )
@@ -263,7 +259,7 @@ def open_menu(n):
 
 def close_menu(n):
     # print(n)
-    global state, lcanvas, root, textlist_name
+    global state, lcanvas, root, textlist_name, lc_w, lc_h
     state = "closing_menu"
 
     lc_w = round((fw - 13 * sr) * 0.04) * 25
@@ -272,33 +268,29 @@ def close_menu(n):
     # textbar = canvas.create_rectangle(10 * sr, 3 * sr, 10 * sr, 3 * sr, fill=gray_color)
     if frame != 0:
         # print("frame")
+        sr4 = 4 * sr
+        sr05 = 0.5 * sr
+        cysr = cy - sr
+        srcr = 5 * sr - cr
         for x in range(frame):
-            t = x / frame
-            # t = -20 * t**7 + 70 * t**6 - 84 * t**5 + 35 * t**4
-            t = -2 * t**3 + 3 * t**2
+            t = precalc_menu[x][0][2]
+            cxsrt = (cx - 5 * sr) * t
             for i in range(8):
+                moveto_x = sr4 - cr * precalc_menu[x][i][0] + cxsrt
+                moveto_y = cysr - cr * precalc_menu[x][i][1]
                 canvas.moveto(
                     SubC[i],
-                    5 * sr
-                    - 2.5 * cr * math.sin(pi * t * (8 - i) / 4)
-                    - sr
-                    + (cx - 5 * sr) * t,
-                    cy - 2.5 * cr * math.cos(pi * t * (8 - i) / 4) - sr,
+                    moveto_x,
+                    moveto_y,
                 )
-            textlist_name[n].place(
-                x=(
-                    5 * sr
-                    - 2.5 * cr * math.sin(pi * t * (8 - n) / 4)
-                    - sr * 0.5
-                    + (cx - 5 * sr) * t
-                ),
-                y=(cy - 2.5 * cr * math.cos(pi * t * (8 - n) / 4) - sr * 0.5),
-            )
-            canvas.moveto(CenterC, 5 * sr - cr + (cx - 5 * sr) * t, cy - cr)
+                if i == n:
+                    textlist_name[i].place(
+                        x=moveto_x + sr05,
+                        y=moveto_y + sr05,
+                    )
+            canvas.moveto(CenterC, srcr + cxsrt)
 
             lcanvas.place(
-                x=10 * sr,
-                y=3 * sr,
                 width=lc_w * (1 - t),
                 height=lc_h * (1 - t),
             )
@@ -338,6 +330,16 @@ def close_menu(n):
         )
         for i in range(8)
     ]
+
+    for i in range(8):
+        rgb = colors[i].replace("#", "")
+
+        rgb = (int(rgb[:2], 16), int(rgb[2:4], 16), int(rgb[4:], 16))
+        brightness = calculate_brightness(rgb)
+        if brightness >= 0.5:
+            textlist_name[i].config(fg="#303030")
+        else:
+            textlist_name[i].config(fg="#ffffff")
 
     for i in range(8):
         canvas.itemconfig(SubC[i], fill=colors[i])
@@ -455,20 +457,20 @@ def kbinput():
         time.sleep(0.05)
 
 
-def framecount():
-    global frame
-    while True:
-        frame = (
-            round(90 / int(combobox_anspeed.get()))
-            if combobox_anspeed.get() != "x"
-            else 0
-        )
-        time.sleep(0.2)
+# def framecount():
+#     global frame
+#     while True:
+#         frame = (
+#             round(90 / int(combobox_anspeed.get()))
+#             if combobox_anspeed.get() != "x"
+#             else 0
+#         )
+#         time.sleep(0.2)
 
 
 def edit_name_onoff():
-    global naming, textlist_name
-    if state == "open_circle":
+    global naming, textlist_name, editing_name
+    if state == "open_circle" and not editing_name:
         if naming:
             naming = False
             canvas.itemconfig(CenterC, fill=gray_color)
@@ -494,13 +496,19 @@ def edit_name_onoff():
 
 
 def print_text(c, i):
-    global root
+    global root, state
     if ready:
         fore.activate()
-        threading.Thread(target=write_text, args=[c[i].cget("text")]).start()
+        pre = clipboard.paste()
+        pyperclip.copy(c[i].cget("text"))
+
+        pyautogui.hotkey("ctrl", "v")
+        pyperclip.copy(pre)
+        # threading.Thread(target=write_text, args=[c[i].cget("text")]).start()
         # pyautogui.write(c[i].cget("text"), interval=0)
         # print(c[i].cget("text"))
         root[-1].destroy()
+        state = "window"
 
 
 def write_text(text):
@@ -512,6 +520,8 @@ def write_text(text):
 
 
 def edit_name(i, j):
+    global editing_name
+    editing_name = True
     text = j.cget("text")
 
     editing_ent = tk.Entry(
@@ -532,12 +542,14 @@ def edit_name(i, j):
 
 
 def saveNameEntryValue(i, j, ent):
+    global editing_name
     names = dataload("name")
     names[i] = ent.get()
     datasave(names, type="names")
     # print("destroy", ent.get())
     j.config(text=ent.get())
     ent.destroy()
+    editing_name = False
 
 
 def edit_text(i, j, x, y, n, ans):
@@ -715,8 +727,10 @@ def rt_colorchange(i, j):
         brightness = calculate_brightness(rgb)
         if brightness >= 0.5:
             j.configure(bg="#303030")
+            textlist_name[i].config(fg="#303030")
         else:
             j.configure(bg="#ffffff")
+            textlist_name[i].config(fg="#ffffff")
 
         colors = [colors_var[i].get() for i in range(8)]
 
@@ -747,6 +761,27 @@ def calculate_brightness(rgb):
     return brightness
 
 
+def calc_sct(event):
+    global precalc_menu, frame
+    precalc_menu = []
+    frame = (
+        round(90 / int(combobox_anspeed.get())) if combobox_anspeed.get() != "x" else 0
+    )
+    for x in range(frame):
+        t = -2 * (x / frame) ** 3 + 3 * (x / frame) ** 2
+
+        menu_i = []
+        for i in range(8):
+            menu_i.append(
+                [
+                    2.5 * math.sin(pi * t * (8 - i) / 4),
+                    2.5 * math.cos(pi * t * (8 - i) / 4),
+                    t,
+                ]
+            )
+        precalc_menu.append(menu_i)
+
+
 # global window
 window = tk.Tk()
 
@@ -765,13 +800,13 @@ state = "window"
 pi = math.pi
 ready = False
 file = "C:\\ProDays\\PDAnsMacro.json"
-# root_num = 0
 root = []
-version = "v1.3.0"
+version = "v1.4.0"
 naming = False
 startkey_stored = True
 gray_color = "#d9d9d9"
 start_key = dataload("start_key")
+editing_name = False
 
 thread_key = threading.Thread(target=kbinput, daemon=True)
 thread_key.start()
@@ -897,10 +932,11 @@ startkey_button.place(width=112.5, height=45)
 speed = dataload("speed")
 combobox_anspeed.current(speed)
 combobox_anspeed.pack()
-combobox_anspeed.bind("<<ComboboxSelected>>", None)
+combobox_anspeed.bind("<<ComboboxSelected>>", calc_sct)
+calc_sct(None)
 
-thread_frame = threading.Thread(target=framecount, daemon=True)
-thread_frame.start()
+# thread_frame = threading.Thread(target=framecount, daemon=True)
+# thread_frame.start()
 
 
 frame_colors = tk.Frame(window, width=400, height=80)
@@ -933,7 +969,7 @@ for i, j in enumerate(colors_entry):
 
     rgb = (int(rgb[:2], 16), int(rgb[2:4], 16), int(rgb[4:], 16))
     brightness = calculate_brightness(rgb)
-    if brightness >= 0.6:
+    if brightness >= 0.5:
         j.configure(bg="#303030")
     else:
         j.configure(bg="#ffffff")
