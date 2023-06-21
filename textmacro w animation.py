@@ -1,18 +1,23 @@
-import pyautogui, pyperclip, clipboard
-import time
-import math
-import tkinter as tk
-import threading
-import keyboard
-import os
 import json
-import requests
-import webbrowser
+from math import sin, cos
+from math import pi as math_pi
+import os
+from threading import Thread as lb_thread
+import time
+import tkinter as tk
+from webbrowser import open_new
+
+import clipboard
+import pyautogui
+import pyperclip
+from keyboard import is_pressed as kip
+from keyboard import read_key as krk
+from requests import get as rq_get
 
 
 def version_check():
     try:
-        response = requests.get(
+        response = rq_get(
             "https://api.github.com/repos/pro-days/textmacro-with-animation/releases/latest"
         )
         checked_version = response.json()["name"]
@@ -21,9 +26,7 @@ def version_check():
                 update_label.config(text="최신버전 O", fg="green")
             else:
                 update_url = response.json()["html_url"]
-                update_label.bind(
-                    "<Button-1>", lambda event: webbrowser.open_new(update_url)
-                )
+                update_label.bind("<Button-1>", lambda event: open_new(update_url))
                 update_label.config(text="최신버전 X", fg="red")
         else:
             update_label.config(text="업데이트 확인 실패", fg="red")
@@ -41,8 +44,8 @@ def open_circle():
             for i in range(8):
                 canvas.moveto(
                     SubC[i],
-                    cx + 2.5 * cr * math.sin(pi * t * i / 4) - sr,
-                    cy - 2.5 * cr * math.cos(pi * t * i / 4) - sr,
+                    cx + 2.5 * cr * sin(pi * t * i / 4) - sr,
+                    cy - 2.5 * cr * cos(pi * t * i / 4) - sr,
                 )
             root[-1].update()
             time.sleep(delay)
@@ -51,8 +54,8 @@ def open_circle():
     for i in range(8):
         canvas.moveto(
             SubC[i],
-            cx + 2.5 * cr * math.sin(pi * i / 4) - sr,
-            cy - 2.5 * cr * math.cos(pi * i / 4) - sr,
+            cx + 2.5 * cr * sin(pi * i / 4) - sr,
+            cy - 2.5 * cr * cos(pi * i / 4) - sr,
         )
     root[-1].update()
     state = "open_circle"
@@ -90,8 +93,8 @@ def open_circle():
         j.place(
             width=sr,
             height=sr,
-            x=(cx + 2.5 * cr * math.sin(pi * i / 4) - sr * 0.5),
-            y=(cy - 2.5 * cr * math.cos(pi * i / 4) - sr * 0.5),
+            x=(cx + 2.5 * cr * sin(pi * i / 4) - sr * 0.5),
+            y=(cy - 2.5 * cr * cos(pi * i / 4) - sr * 0.5),
         )
 
 
@@ -302,8 +305,8 @@ def close_menu(n):
     for i in range(8):
         canvas.moveto(
             SubC[i],
-            cx + 2.5 * cr * math.sin(pi * i / 4) - sr,
-            cy - 2.5 * cr * math.cos(pi * i / 4) - sr,
+            cx + 2.5 * cr * sin(pi * i / 4) - sr,
+            cy - 2.5 * cr * cos(pi * i / 4) - sr,
         )
     canvas.moveto(CenterC, -cr + cx, cy - cr)
     root[-1].update()
@@ -356,8 +359,8 @@ def close_menu(n):
         j.place(
             width=sr,
             height=sr,
-            x=(cx + 2.5 * cr * math.sin(pi * i / 4) - sr * 0.5),
-            y=(cy - 2.5 * cr * math.cos(pi * i / 4) - sr * 0.5),
+            x=(cx + 2.5 * cr * sin(pi * i / 4) - sr * 0.5),
+            y=(cy - 2.5 * cr * cos(pi * i / 4) - sr * 0.5),
         )
 
     state = "open_circle"
@@ -447,10 +450,10 @@ def kbinput():
     global state
     while startkey_stored:
         # print("111")
-        if keyboard.is_pressed(start_key):
+        if kip(start_key):
             # print("123")
             if state == "window":
-                threading.Thread(target=setup, daemon=True).start()
+                lb_thread(target=setup, daemon=True).start()
             # elif state == "open_circle":
             #     threading.Thread(target=open_menu, daemon=True, args=n).start()
             time.sleep(0.2)
@@ -677,6 +680,8 @@ def datamake():
             "#c780e8",
         ],
     }
+    if not os.path.isdir("C:\\ProDays"):
+        os.mkdir("C:\\ProDays")
     with open(file, "w") as f:
         json.dump(json_object, f)
 
@@ -700,7 +705,7 @@ def saveall():
 def store_startkey():
     global start_key, startkey_stored
     startkey_stored = False
-    start_key = keyboard.read_key()
+    start_key = krk()
 
     with open(file, "r") as f:
         json_object = json.load(f)
@@ -711,7 +716,7 @@ def store_startkey():
 
     time.sleep(0.2)
     startkey_stored = True
-    thread_key = threading.Thread(target=kbinput, daemon=True)
+    thread_key = lb_thread(target=kbinput, daemon=True)
     thread_key.start()
     startkey_button.config(text=start_key)
 
@@ -720,17 +725,26 @@ def rt_colorchange(i, j):
     global colors
     try:
         j.configure(fg=colors_var[i].get())
+        # print(colors_var[i].get())
 
         rgb = str(colors_var[i].get()).replace("#", "")
 
         rgb = (int(rgb[:2], 16), int(rgb[2:4], 16), int(rgb[4:], 16))
         brightness = calculate_brightness(rgb)
+        # print(brightness)
         if brightness >= 0.5:
             j.configure(bg="#303030")
-            textlist_name[i].config(fg="#303030")
+            try:
+                textlist_name[i].config(fg="#303030")
+            except:
+                pass
         else:
             j.configure(bg="#ffffff")
-            textlist_name[i].config(fg="#ffffff")
+            try:
+                textlist_name[i].config(fg="#ffffff")
+            except:
+                pass
+        # print("pass1")
 
         colors = [colors_var[i].get() for i in range(8)]
 
@@ -738,12 +752,14 @@ def rt_colorchange(i, j):
         try:
             for i in range(8):
                 canvas.itemconfig(SubC[i], fill=colors[i])
+            # print(1)
         except:
             pass
 
         for i in range(8):
             try:
                 textlist_name[i].config(bg=colors[i])
+                # print(1)
             except:
                 pass
     except:
@@ -774,8 +790,8 @@ def calc_sct(event):
         for i in range(8):
             menu_i.append(
                 [
-                    2.5 * math.sin(pi * t * (8 - i) / 4),
-                    2.5 * math.cos(pi * t * (8 - i) / 4),
+                    2.5 * sin(pi * t * (8 - i) / 4),
+                    2.5 * cos(pi * t * (8 - i) / 4),
                     t,
                 ]
             )
@@ -797,7 +813,7 @@ if os.path.isfile(path):
 
 
 state = "window"
-pi = math.pi
+pi = math_pi
 ready = False
 file = "C:\\ProDays\\PDAnsMacro.json"
 root = []
@@ -808,7 +824,7 @@ gray_color = "#d9d9d9"
 start_key = dataload("start_key")
 editing_name = False
 
-thread_key = threading.Thread(target=kbinput, daemon=True)
+thread_key = lb_thread(target=kbinput, daemon=True)
 thread_key.start()
 
 
@@ -833,7 +849,7 @@ update_label = tk.Label(
 )
 update_label.pack()
 
-thread_version = threading.Thread(target=version_check, daemon=True)
+thread_version = lb_thread(target=version_check, daemon=True)
 thread_version.start()
 
 
@@ -855,7 +871,7 @@ descr_label = tk.Label(
 descr_label.pack()
 descr_label.bind(
     "<Button-1>",
-    lambda event: webbrowser.open_new(
+    lambda event: open_new(
         "https://github.com/Pro-Days/textmacro-with-animation#readme"
     ),
 )
