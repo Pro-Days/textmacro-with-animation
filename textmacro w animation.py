@@ -1,10 +1,11 @@
 import json
-from math import sin, cos
-from math import pi as math_pi
 import os
-from threading import Thread as lb_thread
 import time
 import tkinter as tk
+from math import cos
+from math import pi as math_pi
+from math import sin
+from threading import Thread as lb_thread
 from webbrowser import open_new
 
 import clipboard
@@ -447,6 +448,7 @@ def setup():
 
 
 def kbinput():
+    # print("11111")
     global state
     while startkey_stored:
         # print("111")
@@ -457,7 +459,21 @@ def kbinput():
             # elif state == "open_circle":
             #     threading.Thread(target=open_menu, daemon=True, args=n).start()
             time.sleep(0.2)
+        if state != "window" and kip("esc"):
+            escape1()
         time.sleep(0.05)
+
+
+def escape1():
+    esc = lb_thread(target=escape2, daemon=True)
+    esc.start()
+    time.sleep(0.2)
+
+
+def escape2():
+    global state, lcanvas
+    state = "window"
+    root[-1].destroy()
 
 
 # def framecount():
@@ -499,7 +515,7 @@ def edit_name_onoff():
 
 
 def print_text(c, i):
-    global root, state
+    global root, state, lcanvas
     if ready:
         fore.activate()
         pre = clipboard.paste()
@@ -514,12 +530,12 @@ def print_text(c, i):
         state = "window"
 
 
-def write_text(text):
-    pyautogui.write(text, interval=0.01)
-    global state, temp, thread_key
-    state = "window"
-    # print(state)
-    # window.destroy()
+# def write_text(text):
+#     pyautogui.write(text, interval=0.01)
+#     global state, temp, thread_key
+#     state = "window"
+#     # print(state)
+#     # window.destroy()
 
 
 def edit_name(i, j):
@@ -817,7 +833,7 @@ pi = math_pi
 ready = False
 file = "C:\\ProDays\\PDAnsMacro.json"
 root = []
-version = "v1.4.0"
+version = "v1.5.0"
 naming = False
 startkey_stored = True
 gray_color = "#d9d9d9"
