@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 import tkinter as tk
 from math import cos
@@ -45,8 +46,8 @@ def open_circle():
             for i in range(8):
                 canvas.moveto(
                     SubC[i],
-                    cx + 2.5 * cr * sin(pi * t * i / 4) - sr,
-                    cy - 2.5 * cr * cos(pi * t * i / 4) - sr,
+                    cx + 2.5 * cr * sin(pi * i / 4) * t - sr,
+                    cy - 2.5 * cr * cos(pi * i / 4) * t - sr,
                 )
             root[-1].update()
             time.sleep(delay)
@@ -102,7 +103,6 @@ def open_circle():
 def open_menu(n):
     # print(n)
     global state, lcanvas, root, textlist_name, lc_w, lc_h
-    state = "opening_menu"
     # print(n)
     # print(lcanvas)
 
@@ -184,6 +184,8 @@ def open_menu(n):
         j.place(width=textc_w, height=text_h, x=textt_w, y=text_h * i)
     ready = True
 
+    state = "open_menu"
+
     # textbar = canvas.create_rectangle(10 * sr, 3 * sr, 10 * sr, 3 * sr, fill=gray_color)
     if frame != 0:
         sr4 = 4 * sr
@@ -192,73 +194,78 @@ def open_menu(n):
         srcr = 5 * sr - cr
         cxsr = cx - 5 * sr
         for x in range(frame - 1, -1, -1):
-            t = precalc_menu[x][0][2]
-            cxsrt = cxsr * t
-            for i in range(8):
-                moveto_x = sr4 - cr * precalc_menu[x][i][0] + cxsrt
-                moveto_y = cysr - cr * precalc_menu[x][i][1]
-                canvas.moveto(
-                    SubC[i],
-                    moveto_x,
-                    moveto_y,
-                )
-                if i == n:
-                    textlist_name[i].place(
-                        x=moveto_x + sr05,
-                        y=moveto_y + sr05,
+            try:
+                t = precalc_menu[x][0][2]
+                cxsrt = cxsr * t
+                for i in range(8):
+                    moveto_x = sr4 - cr * precalc_menu[x][i][0] + cxsrt
+                    moveto_y = cysr - cr * precalc_menu[x][i][1]
+                    canvas.moveto(
+                        SubC[i],
+                        moveto_x,
+                        moveto_y,
                     )
-            canvas.moveto(CenterC, srcr + cxsrt)
+                    if i == n:
+                        textlist_name[i].place(
+                            x=moveto_x + sr05,
+                            y=moveto_y + sr05,
+                        )
+                canvas.moveto(CenterC, srcr + cxsrt)
 
-            lcanvas.place(
-                width=lc_w * (1 - t),
-                height=lc_h * (1 - t),
-            )
-            root[-1].update()
+                lcanvas.place(
+                    width=lc_w * (1 - t),
+                    height=lc_h,
+                )
+                root[-1].update()
 
-            time.sleep(delay)
+                time.sleep(delay)
+            except:
+                pass
     else:
         pass
-    for i in range(1, 9):
-        canvas.moveto(
-            SubC[i - 1],
-            4 * sr,
-            cy - 2.5 * cr - sr,
+    try:
+        for i in range(1, 9):
+            canvas.moveto(
+                SubC[i - 1],
+                4 * sr,
+                cy - 2.5 * cr - sr,
+            )
+    except:
+        pass
+    else:
+        canvas.moveto(CenterC, 5 * sr - cr, cy - cr)
+        textlist_name[n].place(
+            x=(4.5 * sr),
+            y=(cy - 2.5 * cr - sr * 0.5),
         )
-    canvas.moveto(CenterC, 5 * sr - cr, cy - cr)
-    textlist_name[n].place(
-        x=(4.5 * sr),
-        y=(cy - 2.5 * cr - sr * 0.5),
-    )
 
-    lcanvas.place(
-        x=10 * sr,
-        y=3 * sr,
-        width=lc_w,
-        height=lc_h,
-    )
-    root[-1].update()
-    # print(lc_w, lc_h)
-    # 10sr ~ fw - 3sr => fw - 13sr
-    # print("frame")
-    # textlist = []
+        lcanvas.place(
+            x=10 * sr,
+            y=3 * sr,
+            width=lc_w,
+            height=lc_h,
+        )
+        root[-1].update()
+        # print(lc_w, lc_h)
+        # 10sr ~ fw - 3sr => fw - 13sr
+        # print("frame")
+        # textlist = []
 
-    # scrollbar = tk.Scrollbar(lcanvas, command=lcanvas.yview, orient=tk.VERTICAL)
-    # scrollbar.pack(side="right", fill="both")
-    # lcanvas.configure(yscrollcommand=scrollbar.set)
+        # scrollbar = tk.Scrollbar(lcanvas, command=lcanvas.yview, orient=tk.VERTICAL)
+        # scrollbar.pack(side="right", fill="both")
+        # lcanvas.configure(yscrollcommand=scrollbar.set)
 
-    textlist_name[n].bind(
-        "<Button-1>",
-        lambda event, n=n: close_menu(n) if state == "open_menu" else None,
-    )
-
-    for i in range(8):
-        canvas.tag_bind(
-            SubC[i],
+        textlist_name[n].bind(
             "<Button-1>",
             lambda event, n=n: close_menu(n) if state == "open_menu" else None,
         )
 
-    state = "open_menu"
+        for i in range(8):
+            canvas.tag_bind(
+                SubC[i],
+                "<Button-1>",
+                lambda event, n=n: close_menu(n) if state == "open_menu" else None,
+            )
 
 
 def close_menu(n):
@@ -277,30 +284,33 @@ def close_menu(n):
         cysr = cy - sr
         srcr = 5 * sr - cr
         for x in range(frame):
-            t = precalc_menu[x][0][2]
-            cxsrt = (cx - 5 * sr) * t
-            for i in range(8):
-                moveto_x = sr4 - cr * precalc_menu[x][i][0] + cxsrt
-                moveto_y = cysr - cr * precalc_menu[x][i][1]
-                canvas.moveto(
-                    SubC[i],
-                    moveto_x,
-                    moveto_y,
-                )
-                if i == n:
-                    textlist_name[i].place(
-                        x=moveto_x + sr05,
-                        y=moveto_y + sr05,
+            try:
+                t = precalc_menu[x][0][2]
+                cxsrt = (cx - 5 * sr) * t
+                for i in range(8):
+                    moveto_x = sr4 - cr * precalc_menu[x][i][0] + cxsrt
+                    moveto_y = cysr - cr * precalc_menu[x][i][1]
+                    canvas.moveto(
+                        SubC[i],
+                        moveto_x,
+                        moveto_y,
                     )
-            canvas.moveto(CenterC, srcr + cxsrt)
+                    if i == n:
+                        textlist_name[i].place(
+                            x=moveto_x + sr05,
+                            y=moveto_y + sr05,
+                        )
+                canvas.moveto(CenterC, srcr + cxsrt)
 
-            lcanvas.place(
-                width=lc_w * (1 - t),
-                height=lc_h * (1 - t),
-            )
+                lcanvas.place(
+                    width=lc_w * (1 - t),
+                    height=lc_h,
+                )
 
-            root[-1].update()
-            time.sleep(delay)
+                root[-1].update()
+                time.sleep(delay)
+            except:
+                pass
     else:
         pass
     for i in range(8):
@@ -614,7 +624,7 @@ def dataload(type, n=0) -> list:
         except:
             ans = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
             speed = 0
-            start_key = "f9"
+            start_key = "f8"
             names = ["1", "2", "3", "4", "5", "6", "7", "8"]
             colors = [
                 "#ff6961",
@@ -630,7 +640,7 @@ def dataload(type, n=0) -> list:
     else:
         ans = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
         speed = 0
-        start_key = "f9"
+        start_key = "f8"
         names = ["1", "2", "3", "4", "5", "6", "7", "8"]
         colors = [
             "#ff6961",
@@ -683,7 +693,7 @@ def datamake():
             "7": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
         },
         "speed": 2,
-        "start_key": "f9",
+        "start_key": "f8",
         "Names": ["1", "2", "3", "4", "5", "6", "7", "8"],
         "colors": [
             "#ff6961",
@@ -818,14 +828,25 @@ def calc_sct(event):
 window = tk.Tk()
 
 
-window.title("TWA")
-window.geometry("400x400+100+100")
+version = "v1.6.0"
+window.title("데이즈 텍스트매크로 " + version)
+window.geometry("400x400")
 window.resizable(False, False)
 
 
-path = os.path.join(os.path.dirname(__file__), "icon.ico")
-if os.path.isfile(path):
-    window.iconbitmap(path)
+# window.wm_attributes('-toolwindow', 'True')
+try:
+    os.chdir(sys._MEIPASS)
+    # print(sys._MEIPASS)
+except:
+    os.chdir(os.getcwd())
+window.iconbitmap(default="icon.ico")
+
+# path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.ico")
+# print("file: " + __file__)
+# print("dir: " + os.path.dirname(os.path.abspath(__file__)))
+# print("join: " + os.path.join(os.path.dirname(__file__), "icon.ico"))
+# window.iconbitmap(path)
 
 
 state = "window"
@@ -833,7 +854,6 @@ pi = math_pi
 ready = False
 file = "C:\\ProDays\\PDAnsMacro.json"
 root = []
-version = "v1.5.0"
 naming = False
 startkey_stored = True
 gray_color = "#d9d9d9"
@@ -1026,5 +1046,15 @@ quit_bt = tk.Button(
     command=saveall,
 )
 quit_bt.pack()
+
+
+tk.Label(
+    window,
+    text="제작자: 데이즈 | 디스코드: pro_days",
+    relief=tk.SUNKEN,
+    font=("맑은 고딕", 10),
+    anchor=tk.W,
+    bd=1,
+).pack(side=tk.BOTTOM, fill=tk.X)
 
 window.mainloop()
